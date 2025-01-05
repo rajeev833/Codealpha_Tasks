@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-DEFAULT_CURRENCY = "INR"
+
 
 
 # Application definition
