@@ -1,0 +1,16 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% block content %}
+<div class="edit-container">
+    <h1>Edit Comment</h1>
+    <form method="POST" class="edit-post-form">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form }}
+        </div>
+        <button type="submit" class="submit-button">Update Comment</button>
+        <br><br>
+        <a href="{% url 'post-detail' post_pk %}" class="cancel-button">Cancel</a>
+    </form>
+</div>
+{% endblock content %}

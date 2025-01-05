@@ -1,0 +1,44 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% block content %}
+    <!-- Back to Profile Button -->
+    <div>
+        <a href="{% url 'profile' user.profile.pk %}" class="back-to-feed-btn">
+            ← Back to Profile
+        </a>
+    </div>
+
+    <!-- Manage Posts Section -->
+    <section id="manage-posts">
+        <div class="posts-box">
+            <h2>Manage Your Posts</h2>
+
+            <!-- Post List -->
+            {% for post in post_list %}
+                <div class="post-list">
+                    {% for image_instance in post.image.all %}
+                        <img src="{{ image_instance.image.url }}" alt="Post Image" class="post-img">
+                    {% empty %}
+                        <p>No images available.</p>
+                    {% endfor %}
+                    <div class="post-description">{{ post.caption }}</div>
+                    <div class="post-actions">
+                        <a href="{% url 'post-edit' post.pk %}" class="edit-post-btn"><i class="fa fa-pencil"></i>&nbsp;Edit</a>
+                        <a href="{% url 'post-delete' post.pk %}" class="delete-post-btn"><i class="fa fa-trash"></i>&nbsp;Delete</a>
+                    </div>
+                </div>
+            {% endfor %}
+
+            <!-- Add New Post -->
+            <div class="add-post">
+                <h3>Add New Post</h3>
+                <form action="" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="file" name="images" multiple>
+                    {{ form }}  
+                    <button type="submit" class="add-post-btn">Add Post</button>
+                </form>
+            </div>
+        </div>
+    </section>
+{% endblock %}

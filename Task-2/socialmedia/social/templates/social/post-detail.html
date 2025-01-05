@@ -1,0 +1,297 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <!-- Back to Feed Button -->
+    <div>
+        <a href="{% url 'post-list' %}" class="back-to-feed-btn">
+            ← Back to Feed
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Post Header -->
+        <div class="post-header">
+            <img src="{{ post.author.profile.picture.url }}" alt="User Avatar" class="user-avatar">
+            <div class="user-info">
+                <div class="username">{{ post.author }}</div>
+                <div class="post-time">Posted on {{ post.created_on }}</div>
+            </div>
+        </div>
+
+        <!-- Post Content -->
+        <div class="post-content">
+            {% if post.image.all.count > 1 %}
+                <div class="image-carousel" id="imageContainer-{{ forloop.counter }}">
+                    <button id="main-prevBtn-{{ forloop.counter }}" class="prev-btn">&#60;</button>
+                    <div class="image-content">
+                        {% with first_image=post.image.first %}
+                            <img src="{{ first_image.image.url }}" alt="Post Image">
+                        {% endwith %}
+                    </div>
+                    <button id="main-nextBtn-{{ forloop.counter }}" class="next-btn">&#62;</button>
+                </div>
+            {% else %}
+                <div class="image-carousel">
+                    <div class="image-content">
+                        {% with first_image=post.image.first %}
+                            <img src="{{ first_image.image.url }}" alt="Post Image">
+                        {% endwith %}
+                    </div>
+                </div>
+            {% endif %}
+            <br>
+            <!-- Post Caption -->
+            <div class="caption"> <p class="post-content">{{ post.caption }}</p> </div>
+
+            <script>
+                // Array of image URLs
+                const images = [
+                    {% for image in post.image.all %}
+                        "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ];
+                
+                // Index to track the current image
+                let currentIndex = 0;
+                
+                // Function to display the current image
+                function displayImage(index) {
+                    const imgElement = document.querySelector('#imageContainer-{{ forloop.counter }} .image-content img');
+                    imgElement.src = images[index];
+                    imgElement.alt = `Image ${index + 1}`;
+                }
+                
+                // Display the first image initially
+                displayImage(currentIndex);
+                
+                // Event listeners for buttons
+                document.getElementById('main-prevBtn-{{ forloop.counter }}').addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    displayImage(currentIndex);
+                });
+                
+                document.getElementById('main-nextBtn-{{ forloop.counter }}').addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % images.length;
+                    displayImage(currentIndex);
+                });
+            </script>
+        </div>
+
+        <!-- Post Interactions -->
+        <div class="post-actions">
+            <form method="POST" action="{% url 'toggle-like' post.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.path }}">
+            
+                {% if user in post.likes.all %}
+                    <button class="like-btn"><i class="fa fa-heart"></i></button>
+                {% else %}
+                    <button class="like-btn"><i class="fa fa-heart-o"></i></button>
+                {% endif %}
+                <a href="{% url 'post-likes' post.pk %}" class="like-count"> <span>{{ post.likes.count }} like{{ post.likes.count|pluralize }}</span> </a>
+            </form>
+
+            <button class="comment-btn"> <i class="fa fa-comment"></i> </button>
+            <span class="comment-count">{{ comment_count }} comment{{ comment_count|pluralize }}</span>
+
+            <button class="comment-btn share-btn" onclick="shareToggle(`{{ post.pk }}`)"> <i class="fa fa-share-alt"></i> </button>
+        </div>
+
+        <form method="POST" action="{% url 'share-post' post.pk %}" id="{{ post.pk }}" style="display: none;" class="comment-form">
+            {% csrf_token %}
+            {{ shareform|crispy }}
+            <button type="submit" class="post-button">Share Post</button>
+        </form>
+
+        <!-- Comment Section -->
+        <div class="comment-section">
+            {% for comment in comments %}
+                {% if comment.is_parent %}
+                    <div class="comment">
+                        <img src="{{ comment.author.profile.picture.url }}" alt="User Avatar" class="comment-avatar">
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <div class="comment-username">{{ comment.author }}</div>
+                                <div class="comment-date">{{ comment.created_on }}</div>
+                            </div>
+                            <div class="comment-text">{{ comment.comment }}</div>
+                            <div class="buttons-box">
+                                {% if request.user == comment.author %}
+                                    <div class="comment-buttons"> 
+                                        <form method="POST" action="{% url 'comment-like' post.pk comment.pk %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                        
+                                            {% if user in comment.likes.all %}
+                                                <button class="like-btn"><i class="fa fa-heart"></i></button>
+                                            {% else %}
+                                                <button class="like-btn"><i class="fa fa-heart-o"></i></button>
+                                            {% endif %}
+                                            <a href="{% url 'comment-likes' post.pk comment.pk %}" class="like-count"> <span>{{ comment.likes.count }} like{{ comment.likes.count|pluralize }}</span> </a>
+                                        </form>
+
+                                        <button class="like-btn"> <i class="fa fa-reply" onclick="commentReplyToggle(`{{ comment.pk }}`)"></i> </button>
+                                    </div>
+                                {% else %}
+                                    <form method="POST" action="{% url 'comment-like' post.pk comment.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                    
+                                        {% if user in comment.likes.all %}
+                                            <button class="like-btn"><i class="fa fa-heart"></i></button>
+                                        {% else %}
+                                            <button class="like-btn"><i class="fa fa-heart-o"></i></button>
+                                        {% endif %}
+                                        <a href="{% url 'comment-likes' post.pk comment.pk %}" class="like-count"> <span>{{ comment.likes.count }} like{{ comment.likes.count|pluralize }}</span> </a>
+                                    </form>
+
+                                    <button class="like-btn"> <i class="fa fa-reply" onclick="commentReplyToggle(`{{ comment.pk }}`)"></i> </button>
+                                {% endif %}
+                                
+                                {% if request.user == comment.author %}
+                                    <div class="comment-buttons">
+                                        <a href="{% url 'comment-edit' post.pk comment.pk %}" class="comment-button"><i class="fa fa-pencil"></i></a>
+                                        <a href="{% url 'comment-delete' post.pk comment.pk %}" class="comment-button"><i class="fa fa-trash"></i></a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="reply-form" id="{{ comment.pk }}" style="display: none;" action="{% url 'comment-reply' post.pk comment.pk %}">
+                        {% csrf_token %}
+                        {{ form.comment }}
+                        <button type="submit" class="reply-button">Post</button>
+                    </form>
+                    
+                    <!-- Display Replies -->
+                    <div class="reply-section">
+                        {% for child_comment in comment.children %}
+                            <div class="reply-comment">
+                                <img src="{{ child_comment.author.profile.picture.url }}" alt="User Avatar" class="comment-avatar">
+                                <div class="comment-content">
+                                    <div class="comment-header">
+                                        <div class="comment-username">{{ child_comment.author }}</div>
+                                        <div class="comment-date">{{ child_comment.created_on }}</div>
+                                    </div>
+                                    <div class="comment-text">{{ child_comment.comment }}</div>
+
+                                    <div class="buttons-box">
+                                        {% if request.user == child_comment.author %}
+                                            <div class="comment-buttons"> 
+                                                <form method="POST" action="{% url 'comment-like' post.pk comment.pk %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                
+                                                    {% if user in child_comment.likes.all %}
+                                                        <button class="like-btn"><i class="fa fa-heart"></i></button>
+                                                    {% else %}
+                                                        <button class="like-btn"><i class="fa fa-heart-o"></i></button>
+                                                    {% endif %}
+                                                    <a href="{% url 'comment-likes' post.pk child_comment.pk %}" class="like-count"> <span>{{ child_comment.likes.count }} like{{ child_comment.likes.count|pluralize }}</span> </a>
+                                                </form>
+            
+                                                <button class="like-btn"> <i class="fa fa-reply" onclick="commentReplyToggle(`{{ child_comment.pk }}`)"></i> </button>
+                                            </div>
+                                        {% else %}
+                                            <form method="POST" action="{% url 'comment-like' post.pk child_comment.pk %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="{{ request.path }}">
+                                            
+                                                {% if user in comment.likes.all %}
+                                                    <button class="like-btn"><i class="fa fa-heart"></i></button>
+                                                {% else %}
+                                                    <button class="like-btn"><i class="fa fa-heart-o"></i></button>
+                                                {% endif %}
+                                                <a href="{% url 'comment-likes' post.pk child_comment.pk %}" class="like-count"> <span>{{ child_comment.likes.count }} like{{ child_comment.likes.count|pluralize }}</span> </a>
+                                            </form>
+            
+                                            <button class="like-btn"> <i class="fa fa-reply" onclick="commentReplyToggle(`{{ child_comment.pk }}`)"></i> </button>
+                                        {% endif %}
+                                        
+                                        {% if request.user == child_comment.author %}
+                                            <div class="comment-buttons">
+                                                <a href="{% url 'comment-edit' post.pk comment.pk %}" class="comment-button"><i class="fa fa-pencil"></i></a>
+                                                <a href="{% url 'comment-delete' post.pk comment.pk %}" class="comment-button"><i class="fa fa-trash"></i></a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <form method="post" class="reply-form" id="{{ child_comment.pk }}" style="display: none;" action="{% url 'comment-reply' post.pk comment.pk %}">
+                                {% csrf_token %}
+                                {{ form.comment }}
+                                <button type="submit" class="reply-button">Post</button>
+                            </form>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <form method="post" class="comment-form">
+                {% csrf_token %}
+                {{ form.comment }}
+                <button type="submit" class="post-button">Post</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            window.commentReplyToggle = function(parent_id) { // Ensure function is globally accessible
+                console.log(parent_id);
+                const row = document.getElementById(parent_id);
+
+                if (row) { // Check if the form exists
+                    if (row.style.display === 'none' || row.style.display === '') {
+                        row.style.display = 'block'; // Show the form
+                    } else {
+                        row.style.display = 'none'; // Hide the form
+                    }
+                } else {
+                    console.error("Element not found");
+                }
+            };
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+                window.shareToggle = function(parent_id) { // Ensure function is globally accessible
+                    console.log(parent_id);
+                    const row = document.getElementById(parent_id);
+
+                    if (row) { // Check if the form exists
+                        if (row.style.display === 'none' || row.style.display === '') {
+                            row.style.display = 'block'; // Show the form
+                        } else {
+                            row.style.display = 'none'; // Hide the form
+                        }
+                    } else {
+                        console.error("Element not found");
+                    }
+                };
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.formatTags = function() { // Ensure function is globally accessible
+                const elements = document.getElementsByClassName('caption');
+
+                for (let i=0; i < elements.length; i++) {
+                    let captionText = elements[i].children[0].innerText;
+
+                    let words = captionText.split(' ');
+
+                    for (let j=0; j < words.length; j++) {
+                        if (words[j][0] == '#') {
+                            let replacedText = captionText.replace(/\s\#(.*?)(\s|$)/g, `<a href="/social/search/?query=${words[j].substring(1)}">${words[j]}</a>`);
+                            elements[i].innerHTML = replacedText
+                        }
+                    }
+                }
+            };
+
+            formatTags();
+        });
+    </script>
+{% endblock content %}

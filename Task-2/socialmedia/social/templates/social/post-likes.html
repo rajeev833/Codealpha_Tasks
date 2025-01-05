@@ -1,0 +1,35 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% block content %}
+    <!-- Back to Post Button -->
+    <div>
+        <a href="{% url 'post-detail' post.pk %}" class="back-to-feed-btn">
+            ← Back to Post
+        </a>
+    </div>
+
+    <section id="followers-list">
+        <h2 class="followers-title">Users who liked this post</h2>
+        <div class="followers-container">
+            {% for user in liked_users %}
+                <div class="follower-card">
+                    <a href="{% url 'profile' user.profile.pk %}">
+                        <div class="follower-info">
+                            {% if user.profile.picture %}
+                                <img src="{{ user.profile.picture.url }}" alt="Profile Picture" class="follower-img">
+                            {% else %}
+                                <img src="{% static 'asset/images/profile.jpg' %}" alt="Profile Picture" class="follower-img">
+                            {% endif %}
+                            <div class="follower-details">
+                                <h3 class="follower-name">{{ user.profile.name|default:user.username }}</h3>
+                                <p class="follower-bio">{{ user.profile.bio|default:"No bio available" }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            {% empty %}
+                <p class="red">No one has liked this post yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock content %}

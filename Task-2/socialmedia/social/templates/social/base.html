@@ -1,0 +1,44 @@
+{% load static %}
+{% load custom_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socialzone - Social Media Platform</title>
+    <link rel="stylesheet" href="{% static 'asset/CSS/style.css' %}">
+    <!-- Font Awesome Link -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="header-logo">
+                <img src="{% static 'asset/images/logo.jpg' %}" alt="FriendZone Logo">
+                <span class="platform-name">Socialzone</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{% url 'post-list' %}"><i class="fa fa-home"></i> Home</a></li>
+                    <li><a href="{% url 'explore' %}"><i class="fa fa-search"></i> Explore</a></li>
+                    <li><a href="{% url 'profile' request.user.profile.pk %}"><i class="fa fa-user"></i> Profile</a></li>
+                    <li><a href="{% url 'inbox' %}"><i class="fa fa-envelope"></i> Messages</a></li>
+                    <li class="settings">
+                        <a href="#"><i class="fa fa-cog"></i> Settings</a>
+                        <div class="dropdown">
+                            <a href="{% url 'settings' %}">Account Management</a>
+                            <a href="{% url 'account_logout' %}">Logout</a>
+                        </div>
+                    </li>
+                    {% show_notifications %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    {% block content %}
+
+    {% endblock content %}
+</body>
+</html>

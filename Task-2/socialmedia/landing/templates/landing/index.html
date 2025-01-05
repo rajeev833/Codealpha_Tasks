@@ -1,0 +1,27 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FriendZone - Social Media Platform</title>
+    <link rel="stylesheet" href="{% static 'asset/CSS/landing-styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <img src="{% static 'asset/images/logo.jpg' %}" alt="FriendZone Logo" class="logo">
+        </div>
+        <div class="content">
+            <h1>Welcome to FriendZone</h1>
+            <p class="tagline">Connect with your friends, share your moments, and explore new connections!</p>
+            <div class="buttons">
+                <a href="{% url 'account_login' %}" class="btn login">Login</a>
+                <a href="{% url 'account_signup' %}" class="btn register">Register</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

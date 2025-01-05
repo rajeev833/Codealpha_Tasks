@@ -1,0 +1,45 @@
+{% extends 'social/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <section id="inbox-container">
+        <h2 class="followers-title">Your Conversations</h2>
+        <form action="{% url 'create-thread' %}" method="GET">
+            <button type="submit" class="conversation-btn"> Start a conversation </button>
+        </form>
+        <br>
+        {% if messages %}
+            <div class="messages-container">
+                <ul class="messages-list">
+                    {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                            <li class="message {{ message.tags }}">
+                                <span class="message-icon">
+                                    <span class="white-cross"><i class="fa fa-times"></i></span>
+                                </span>
+                                <span class="message-text">{{ message }}</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <div class="conversation-list">
+            {% for thread in threads %}
+                <a href="{% url 'thread' thread.pk %}">
+                    <div class="conversation">
+                            <img src="{{ thread.user.profile.picture.url }}" alt="User" class="profile-pic">
+                            <div class="conversation-details">
+                                <span class="user-name">{{ thread.user }}</span>
+                            </div>
+                            <img src="{{ thread.receiver.profile.picture.url }}" alt="User" class="other-profile-pic">
+                            <div class="conversation-details">
+                                <span class="user-name">{{ thread.receiver }}</span>
+                            </div>
+                    </div>
+                </a>
+            {% empty %}
+                <p class="red">No conversations found.</p>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock content %}

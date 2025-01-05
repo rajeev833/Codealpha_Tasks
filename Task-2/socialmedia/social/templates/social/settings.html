@@ -1,0 +1,154 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% block content %}
+    <!-- Settings Page Section -->
+    <section id="settings">
+        <div class="settings-container">
+            <h1>Account Settings</h1>
+
+            {% if messages %}
+                <div class="messages-container">
+                    <ul class="messages-list">
+                        {% for message in messages %}
+                            <li class="message {{ message.tags }}">
+                                <span class="message-icon">
+                                    {% if message.tags == 'success' %}
+                                        ✔️
+                                    {% elif message.tags == 'error' %}
+                                        <span class="white-cross"><i class="fa fa-times"></i></span>
+                                    {% elif message.tags == 'info' %}
+                                        ℹ️
+                                    {% elif message.tags == 'warning' %}
+                                        ⚠️
+                                    {% endif %}
+                                </span>
+                                <span class="message-text">{{ message }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Account Information Section -->
+            <div class="settings-section">
+                <h2>Account Information</h2>
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" value="{{ profile.user.email }}" placeholder="Enter your email address" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" value="{{ profile.phone_number }}" placeholder="Enter your phone number" required>
+                    </div>
+            </div>
+
+            <!-- Privacy Settings Section -->
+            <div class="settings-section">
+                <h2>Privacy Settings</h2>
+                    <div class="form-group">
+                        <label for="profileVisibility">Profile Visibility</label>
+                        <select id="profileVisibility" name="profileVisibility">
+                            {% if profile.private == False %}
+                                <option value="public" selected>Public</option>
+                                <option value="private">Private</option>
+                            {% else %}
+                                <option value="public">Public</option>
+                                <option value="private" selected>Private</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="messagePrivacy">Who can send you messages?</label>
+                        <select id="messagePrivacy" name="messagePrivacy">
+                            {% if profile.who_can_send_message == 1 %}
+                                <option value="everyone" selected>Everyone</option>
+                                <option value="followers">Followers Only</option>
+                                <option value="nobody">Nobody</option>
+                            {% elif profile.who_can_send_message == 2 %}
+                                <option value="everyone">Everyone</option>
+                                <option value="followers" selected>Followers Only</option>
+                                <option value="nobody">Nobody</option>
+                            {% else %}
+                                <option value="everyone">Everyone</option>
+                                <option value="followers">Followers Only</option>
+                                <option value="nobody" selected>Nobody</option>
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Change Password Section -->
+            <div class="settings-section">
+                <h2>Change Password</h2>
+                <p>To change your password please click on the button below:</p>
+                <a href="{% url 'account_change_password' %}" class="change-password-btn"><i class="fa fa-lock"></i>&nbsp;Change Password</a>
+            </div>
+
+            <!-- Notification Settings Section -->
+            <div class="settings-section">
+                <h2>Notification Settings</h2>
+                <form action="#">
+                    <div class="form-group">
+                        <label for="emailNotifications">Email Notifications</label>
+                        <input type="checkbox" id="emailNotifications" name="emailNotifications" checked>
+                        <span>Receive email notifications for new messages and interactions.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pushNotifications">Push Notifications</label>
+                        <input type="checkbox" id="pushNotifications" name="pushNotifications">
+                        <span>Receive push notifications on your device.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="save-btn">Update Notifications</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Settings Section -->
+            <div class="settings-section">
+                <h2>Security Settings</h2>
+                <form action="#">
+                    <div class="form-group">
+                        <label for="twoFactor">Two-Factor Authentication</label>
+                        <input type="checkbox" id="twoFactor" name="twoFactor">
+                        <span>Enable two-factor authentication for added security.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="loginAlerts">Login Alerts</label>
+                        <input type="checkbox" id="loginAlerts" name="loginAlerts" checked>
+                        <span>Receive alerts when your account is logged into from an unrecognized device.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="save-btn">Update Security</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Account Management Section -->
+            <div class="settings-section">
+                <h2>Account Management</h2>
+                <div class="account-management-btns">
+                    <a href="{% url 'deactivate-account' %}" class="deactivate-account-btn">
+                        <i class="fa fa-pause-circle"></i>&nbsp;Deactivate Account
+                    </a>
+                    <a href="{% url 'delete-account' %}" class="delete-account-btn">
+                        <i class="fa fa-trash"></i>&nbsp;Delete Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}

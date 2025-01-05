@@ -1,0 +1,306 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load custom_filters %}
+{% block content %}
+    <!-- Profile Section -->
+    <section id="profile">
+        {% if profile_list %}
+            <h2 class="profile-title">Explore Users</h2>
+            {% for profile in profile_list %}
+                <a href="{% url 'profile' profile.pk %}" class="profile-link"> 
+                    <div class="profile-container">
+                        <div class="profile-banner">
+                            <img src="{{ profile.banner.url }}" alt="Profile Banner" class="banner-img">
+                        </div>
+                        <div class="profile-details">
+                            <div class="profile-img-container">
+                                <img src="{{ profile.picture.url }}" alt="Profile Picture" class="profile-img">
+                            </div>
+                            <div class="profile-info">
+                                {% if profile.name %}
+                                    <h2 class="profile-name">{{ profile.name }}</h2>
+                                {% else %}
+                                    <h2 class="profile-name">{{ profile.user.username }}</h2>
+                                {% endif %}
+                                    <p class="profile-username">@{{ profile.user.username }}</p>
+                                {% if profile.bio %}
+                                    <p class="profile-bio">{{ profile.bio }}</p>
+                                {% endif %}
+                                <div class="profile-stats">
+                                    <!-- Display the number of posts for each user -->
+                                    <span><strong>{{ profile.user.post_set.count }}</strong> Post{{ profile.user.post_set.count|pluralize }}</span>
+                                    <span><strong>{{ profile.followers.count }}</strong> Follower{{ profile.followers.count|pluralize }}</span>
+                                    <span><strong>{{ profile.following.count }}</strong> Following</span> 
+                                </div>                    
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+            {% else %}
+                <h2 class="profile-title">Explore Users</h2>
+                <p class="red"> No user found. </p>
+            {% endif %}
+        <!-- Posts Section -->
+        {% if post_list %}
+            {% if tag %}
+                <h2 class="profile-title">Explore <a href="#" class="tag-link"> #{{ tag.name }} </a> Posts</h2>
+            {% endif %}
+            <div class="grid-container">
+                {% for post in post_list %}
+                    {% if post.shared_user %}
+                        <!-- Render shared post -->
+                        <div class="post">
+                            <div class="shared-post-header">
+                                <img src="{{ post.shared_user.profile.picture.url }}" alt="User" class="post-user-img">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' post.shared_user.profile.pk %}" class="feed-container-link">
+                                        <h4 class="post-username">@{{ post.shared_user }}</h4>
+                                    </a>
+                                    <p class="post-time">{{ post.shared_on }}</p>
+                                </div>
+                            </div>
+                
+                            {% if post.shared_caption %}
+                                <div class="caption"> <p class="post-content">{{ post.shared_caption }}</p> </div>
+                            {% endif %}
+                
+                            <div class="shared-indicator">
+                                <p>Shared a post by</p>
+                            </div>
+                
+                            <div class="post-header">
+                                <img src="{{ post.author.profile.picture.url }}" alt="User" class="post-user-img">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' post.author.profile.pk %}" class="feed-container-link">
+                                        <h4 class="post-username">@{{ post.author }}</h4>
+                                    </a>
+                                    <p class="post-time">{{ post.created_on }}</p>
+                                </div>
+                            </div>
+                
+                            <!-- Check visibility message for shared posts -->
+                            {% if visibility_message|get_item:post.id %}
+                                <p class="red">{{ visibility_message|get_item:post.id }}</p>
+                            {% elif post.author == user or not post.author.profile.private or author_following_status|get_item:post.id %}
+                                <div class="post-image">
+                                    {% if post.image.all %}
+                                        {% if post.image.all.count > 1 %}
+                                            <div class="main-image-container" data-images='[
+                                                {% for image in post.image.all %}
+                                                    "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            ]'>
+                                                <button class="prev-btn">&#60;</button>
+                                                <div class="main-image-content">
+                                                    {% with first_image=post.image.first %}
+                                                        <img src="{{ first_image.image.url }}" alt="Post Image">
+                                                    {% endwith %}
+                                                </div>
+                                                <button class="next-btn">&#62;</button>
+                                            </div>
+                                        {% else %}
+                                            <div class="main-image-content">
+                                                {% with first_image=post.image.first %}
+                                                    <img src="{{ first_image.image.url }}" alt="Post Image">
+                                                {% endwith %}
+                                            </div>
+                                        {% endif %}
+                                        <br>
+                                        <a href="{% url 'post-detail' post.pk %}" class="feed-container-link">
+                                            <div class="caption"> <p class="post-content">{{ post.caption }}</p> </div>
+                                        </a>
+                                    {% else %}
+                                        <p class="red">No images available for this post.</p>
+                                    {% endif %}
+                                </div>
+                
+                                <div class="post-actions">
+                                    <form method="POST" action="{% url 'toggle-like' post.pk %}" style="display: flex; align-items: center;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                
+                                        {% if user in post.likes.all %}
+                                            <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                        {% else %}
+                                            <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                        {% endif %}
+                                        <a href="{% url 'post-likes' post.pk %}" class="like-count"> <span>{{ post.likes.count }} like{{ post.likes.count|pluralize }}</span> </a>
+                                    </form>
+                
+                                    <button class="comment-btn"> <i class="fa fa-comment"></i> </button>
+                                    <span class="comment-count">{{ comments_count|get_item:post.id }} comment{{ comments_count|get_item:post.id|pluralize }}</span>
+                
+                                    <button class="comment-btn share-btn" onclick="shareToggle(`{{ post.pk }}`)"> <i class="fa fa-share-alt"></i> </button>
+                                </div>
+                
+                                <form method="POST" action="{% url 'share-post' post.pk %}" id="{{ post.pk }}" style="display: none;" class="comment-form">
+                                    {% csrf_token %}
+                                    {{ shareform|crispy }}
+                                    <button type="submit" class="post-button">Share Post</button>
+                                </form>
+                            {% else %}
+                                <p class="red">You cannot view this post because you do not follow the author. Follow them to see the content.</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <!-- Render non-shared post -->
+                        <div class="post">
+                            <div class="post-header">
+                                <img src="{{ post.author.profile.picture.url }}" alt="User" class="post-user-img">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' post.author.profile.pk %}" class="feed-container-link">
+                                        <h4 class="post-username">@{{ post.author }}</h4>
+                                    </a>
+                                    <p class="post-time">{{ post.created_on }}</p>
+                                </div>
+                            </div>
+                
+                            <!-- Check visibility message for non-shared posts -->
+                            {% if visibility_message|get_item:post.id %}
+                                <p class="red">{{ visibility_message|get_item:post.id }}</p>
+                            {% elif post.author == user or not post.author.profile.private or author_following_status|get_item:post.id %}
+                                <div class="post-image">
+                                    {% if post.image.all %}
+                                        {% if post.image.all.count > 1 %}
+                                            <div class="main-image-container" data-images='[
+                                                {% for image in post.image.all %}
+                                                    "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            ]'>
+                                                <button class="prev-btn">&#60;</button>
+                                                <div class="main-image-content">
+                                                    {% with first_image=post.image.first %}
+                                                        <img src="{{ first_image.image.url }}" alt="Post Image">
+                                                    {% endwith %}
+                                                </div>
+                                                <button class="next-btn">&#62;</button>
+                                            </div>
+                                        {% else %}
+                                            <div class="main-image-content">
+                                                {% with first_image=post.image.first %}
+                                                    <img src="{{ first_image.image.url }}" alt="Post Image">
+                                                {% endwith %}
+                                            </div>
+                                        {% endif %}
+                                        <br>
+                                        <a href="{% url 'post-detail' post.pk %}" class="feed-container-link">
+                                            <div class="caption"> <p class="post-content">{{ post.caption }}</p> </div>
+                                        </a>
+                                    {% else %}
+                                        <p class="red">No images available for this post.</p>
+                                    {% endif %}
+                                </div>
+                
+                                <div class="post-actions">
+                                    <form method="POST" action="{% url 'toggle-like' post.pk %}" style="display: flex; align-items: center;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                
+                                        {% if user in post.likes.all %}
+                                            <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                        {% else %}
+                                            <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                        {% endif %}
+                                        <a href="{% url 'post-likes' post.pk %}" class="like-count"> <span>{{ post.likes.count }} like{{ post.likes.count|pluralize }}</span> </a>
+                                    </form>
+                
+                                    <button class="comment-btn"> <i class="fa fa-comment"></i> </button>
+                                    <span class="comment-count">{{ comments_count|get_item:post.id }} comment{{ comments_count|get_item:post.id|pluralize }}</span>
+                
+                                    <button class="comment-btn share-btn" onclick="shareToggle(`{{ post.pk }}`)"> <i class="fa fa-share-alt"></i> </button>
+                                </div>
+                
+                                <form method="POST" action="{% url 'share-post' post.pk %}" id="{{ post.pk }}" style="display: none;" class="comment-form">
+                                    {% csrf_token %}
+                                    {{ shareform|crispy }}
+                                    <button type="submit" class="post-button">Share Post</button>
+                                </form>
+                            {% else %}
+                                <p class="red">You cannot view this post because you do not follow the author. Follow them to see the content.</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all image containers
+            const imageContainers = document.querySelectorAll('.main-image-container');
+
+            imageContainers.forEach(container => {
+                // Parse the image URLs from the data-images attribute
+                const images = JSON.parse(container.getAttribute('data-images'));
+                let currentIndex = 0;
+
+                // Select the image element and buttons within this container
+                const imgElement = container.querySelector('.main-image-content img');
+                const prevBtn = container.querySelector('.prev-btn');
+                const nextBtn = container.querySelector('.next-btn');
+
+                // Function to display the current image
+                function displayImage(index) {
+                    imgElement.src = images[index];
+                    imgElement.alt = `Image ${index + 1}`;
+                }
+
+                // Display the first image initially
+                displayImage(currentIndex);
+
+                // Add event listener for previous button
+                prevBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    displayImage(currentIndex);
+                });
+
+                // Add event listener for next button
+                nextBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % images.length;
+                    displayImage(currentIndex);
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.shareToggle = function(parent_id) { // Ensure function is globally accessible
+                console.log(parent_id);
+                const row = document.getElementById(parent_id);
+
+                if (row) { // Check if the form exists
+                    if (row.style.display === 'none' || row.style.display === '') {
+                        row.style.display = 'block'; // Show the form
+                    } else {
+                        row.style.display = 'none'; // Hide the form
+                    }
+                } else {
+                    console.error("Element not found");
+                }
+            };
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.formatTags = function() { // Ensure function is globally accessible
+                const elements = document.getElementsByClassName('caption');
+
+                for (let i=0; i < elements.length; i++) {
+                    let captionText = elements[i].children[0].innerText;
+
+                    let words = captionText.split(' ');
+
+                    for (let j=0; j < words.length; j++) {
+                        if (words[j][0] == '#') {
+                            let replacedText = captionText.replace(/\s\#(.*?)(\s|$)/g, `<a href="/social/search/?query=${words[j].substring(1)}">${words[j]}</a>`);
+                            elements[i].innerHTML = replacedText
+                        }
+                    }
+                }
+            };
+
+            formatTags();
+        });
+    </script>
+{% endblock content %}  

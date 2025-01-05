@@ -1,0 +1,53 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="edit-container">
+    <h1>Edit Post</h1>
+    <form method="POST" class="edit-post-form" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <!-- Non-field errors -->
+        {% if form.non_field_errors %}
+            <div class="alert-error">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Existing Images Display -->
+        <div class="form-group">
+            <h3>Existing Images</h3>
+            {% for image in images %}
+                <div class="existing-image">
+                    <img src="{{ image.image.url }}" alt="Post Image" style="max-width: 100px; max-height: 100px;">
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- New Image Upload -->
+        <div class="form-group">
+            <label for="id_images">Upload New Images</label>
+            <input type="file" name="images" multiple>
+        </div>
+
+        <!-- Caption Field -->
+        <div class="form-group">
+            {{ form.caption|as_crispy_field }}
+            {% if form.caption.errors %}
+                <div class="alert-error">
+                    {% for error in form.caption.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="submit-button">Update Post</button>
+        <br><br>
+        <a href="{% url 'profile' user.profile.pk %}" class="cancel-button">Cancel</a>
+    </form>
+</div>
+{% endblock content %}

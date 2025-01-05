@@ -1,0 +1,506 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+    <!-- Profile Section -->
+    <section id="user-profile">
+        <div class="profile-wrapper">
+            <div class="profile-banner">
+                {% if profile.banner %}
+                    <img src="{{ profile.banner.url }}" alt="Profile Banner" class="banner-img">
+                {% else %}
+                    <img src="{% static 'asset/images/banner.webp' %}" alt="Profile Banner" class="banner-img">
+                {% endif %}
+            </div>
+            <div class="profile-details">
+                <div class="profile-img-container">
+                    {% if profile.picture %}
+                        <img src="{{ profile.picture.url }}" alt="Profile Picture" class="profile-img">
+                    {% else %}
+                        <img src="{% static 'asset/images/profile.jpg' %}" alt="Profile Picture" class="profile-img">
+                    {% endif %}
+                </div>
+                <div class="profile-info">
+                    {% if profile.name %}
+                        <h2 class="profile-name">{{ profile.name }}</h2>
+                    {% else %}
+                        <h2 class="profile-name">{{ user.username }}</h2>
+                    {% endif %}
+                    <p class="profile-username">@{{ user.username }}</p>
+                    {% if profile.bio %}
+                        <p class="profile-bio">{{ profile.bio }}</p>
+                    {% endif %}
+                    <div class="profile-stats">
+                        <span><strong>{{ posts_count }}</strong> Post{{ posts_count|pluralize }}</span>
+                        <a href="{% url 'followers-list' profile.pk %}"> <span><strong>{{ number_of_followers }}</strong> Follower{{ number_of_followers|pluralize }}</span> </a>
+                        <a href="{% url 'following-list' profile.pk %}"> <span><strong>{{ number_of_following }}</strong> Following</span>  </a>
+                    </div>                    
+                    <div class="profile-actions">
+                        {% if request.user == user %}
+                            <a href="{% url 'edit-profile' profile.pk %}" class="edit-profile-btn">Edit Profile</a>
+                        {% else %}
+                            {% if request.user in profile.followers.all %}
+                                <form method="POST" action="{% url 'remove-follower' profile.pk %}">
+                                    {% csrf_token %}
+                                    <button class="follow-btn" type="submit">Unfollow</button>
+                                </form>
+                            {% else %}
+                                <form method="POST" action="{% url 'add-follower' profile.pk %}">
+                                    {% csrf_token %}
+                                    <button class="follow-btn" type="submit">Follow</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>                        
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About the User Section -->
+    {% if profile.private %}
+        {% if request.user == user or request.user in profile.followers.all %}
+            {% if profile.birth_date or profile.location %}
+                <section id="about-user">
+                    <div class="user-posts-header">
+                        <h2 class="about-title">About the User</h2>
+                    </div>
+                    <div class="about-wrapper">
+                        {% if profile.birth_date %}
+                            <p class="profile-birthdate"><strong>Date of Birth:</strong> {{ profile.birth_date }}</p>
+                        {% endif %}
+                        {% if profile.location %}
+                            <p class="profile-location"><strong>Location:</strong> {{ profile.location }}</p>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        {% if profile.birth_date or profile.location %}
+            <section id="about-user">
+                <div class="user-posts-header">
+                    <h2 class="about-title">About the User</h2>
+                </div>
+                <div class="about-wrapper">
+                    {% if profile.birth_date %}
+                        <p class="profile-birthdate"><strong>Date of Birth:</strong> {{ profile.birth_date }}</p>
+                    {% endif %}
+                    {% if profile.location %}
+                        <p class="profile-location"><strong>Location:</strong> {{ profile.location }}</p>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+    {% endif %}
+
+    <!-- User's Posts Section -->
+    {% if profile.private %}
+        {% if request.user == user or request.user in profile.followers.all %}
+            <section id="user-posts">
+                <div class="user-posts-header">
+                    <h2 class="section-title">User's Posts</h2>
+                    {% if request.user == user %}
+                        <a href="{% url 'manage-post' %}" class="manage-post-btn">Manage Posts</a>
+                    {% endif %}
+                </div>
+
+                <div class="posts-grid">
+                    {% if original_posts %}
+                        {% for p in original_posts %}
+                            <div class="post-card">
+                                <div class="post-head">
+                                    <img src="{{ p.author.profile.picture.url }}" alt="User" class="post-avatar">
+                                    <div class="post-user-details">
+                                        <a href="{% url 'profile' p.author.profile.pk %}" class="posts-grid-link "><h4 class="post-username">@{{ p.author.username }}</h4></a>
+                                        <p class="post-timestamp">{{ p.created_on }}</p>
+                                    </div>
+                                </div>
+                                <div class="post-media">
+                                    {% if p.image.all %}
+                                        {% if p.image.all.count > 1 %}
+                                            <div class="image-carousel" data-images='[
+                                                    {% for image in p.image.all %}
+                                                        "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                ]'>
+                                                    <button class="prev-btn">&#60;</button>
+                                                    <div class="image-content">
+                                                        {% with first_image=p.image.first %}
+                                                            <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                        {% endwith %}
+                                                    </div>
+                                                    <button class="next-btn">&#62;</button>
+                                            </div>
+                                        {% else %}
+                                            <div class="image-content">
+                                                {% with first_image=p.image.first %}
+                                                    <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                {% endwith %}
+                                            </div>
+                                        {% endif %}
+                                        <a href="{% url 'post-detail' p.pk %}" class="posts-grid-link "> <div class="caption"> <p class="post-caption">{{ p.caption }}</p> </div> </a>
+                                    {% else %}
+                                        <p class="red">No images available for this post.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="post-actions">
+                                    <form method="POST" action="{% url 'toggle-like' p.pk %}" style="display: flex; align-items: center;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        {% if user in p.likes.all %}
+                                            <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                        {% else %}
+                                            <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                        {% endif %}
+                                        <a href="{% url 'post-likes' p.pk %}" class="like-count">
+                                            <span>{{ p.likes.count }} like{{ p.likes.count|pluralize }}</span>
+                                        </a>
+                                    </form>
+                                            
+                                    <button class="comment-btn"><i class="fa fa-comment" class="comment-btn"></i></button>
+                                    <span class="comment-count">{{ comments_count|get_item:p.id }} comment{{ comments_count|get_item:p.id|pluralize }}</span>
+                                </div>
+                            </div>   
+                        {% endfor %}
+                    {% else %}
+                        <p class="red">No posts available.</p>
+                    {% endif %}                 
+                </div>
+            </section>
+        {% else %}
+            <p class="private-message">This profile is private. You need to follow the user to see their posts.</p>
+        {% endif %}
+    {% else %}
+        <section id="user-posts">
+            <div class="user-posts-header">
+                <h2 class="section-title">User's Posts</h2>
+                {% if request.user == user %}
+                    <a href="{% url 'manage-post' %}" class="manage-post-btn">Manage Posts</a>
+                {% endif %}
+            </div>
+
+            <div class="posts-grid">
+                {% if original_posts %}
+                    {% for p in original_posts %}
+                        <div class="post-card">
+                            <div class="post-head">
+                                <img src="{{ p.author.profile.picture.url }}" alt="User" class="post-avatar">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' p.author.profile.pk %}" class="posts-grid-link "><h4 class="post-username">@{{ p.author.username }}</h4></a>
+                                    <p class="post-timestamp">{{ p.created_on }}</p>
+                                </div>
+                            </div>
+                            <div class="post-media">
+                                {% if p.image.all %}
+                                    {% if p.image.all.count > 1 %}
+                                        <div class="image-carousel" data-images='[
+                                                {% for image in p.image.all %}
+                                                    "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            ]'>
+                                                <button class="prev-btn">&#60;</button>
+                                                <div class="image-content">
+                                                    {% with first_image=p.image.first %}
+                                                        <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                    {% endwith %}
+                                                </div>
+                                                <button class="next-btn">&#62;</button>
+                                        </div>
+                                    {% else %}
+                                        <div class="image-content">
+                                            {% with first_image=p.image.first %}
+                                                <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                            {% endwith %}
+                                        </div>
+                                    {% endif %}
+                                    <a href="{% url 'post-detail' p.pk %}" class="posts-grid-link "> <div class="caption"> <p class="post-caption">{{ p.caption }}</p> </div> </a>
+                                {% else %}
+                                    <p class="red">No images available for this post.</p>
+                                {% endif %}
+                            </div>
+                            <div class="post-actions">
+                                <form method="POST" action="{% url 'toggle-like' p.pk %}" style="display: flex; align-items: center;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                    {% if user in p.likes.all %}
+                                        <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                    {% else %}
+                                        <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                    {% endif %}
+                                    <a href="{% url 'post-likes' p.pk %}" class="like-count">
+                                        <span>{{ p.likes.count }} like{{ p.likes.count|pluralize }}</span>
+                                    </a>
+                                </form>
+                                        
+                                <button class="comment-btn"><i class="fa fa-comment" class="comment-btn"></i></button>
+                                <span class="comment-count">{{ comments_count|get_item:p.id }} comment{{ comments_count|get_item:p.id|pluralize }}</span>
+                            </div>                    
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="red">No posts available.</p>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+    
+
+    <!-- User's Shared Posts Section -->
+    {% if profile.private %}
+        {% if request.user == user or request.user in profile.followers.all %}
+            <section id="user-shared-posts">
+                <div class="user-posts-header">
+                    <h2 class="section-title">User's Shared Posts</h2>
+                </div>
+
+                <div class="posts-grid">
+                    {% if shared_posts %}
+                        {% for p in shared_posts %}
+                            <div class="post-card">
+                                <div class="shared-post-header">
+                                    <img src="{{ p.shared_user.profile.picture.url }}" alt="User" class="post-user-img">
+                                    <div class="post-user-details">
+                                        <a href="{% url 'profile' p.shared_user.profile.pk %}" class="feed-container-link">
+                                            <h4 class="post-username">@{{ p.shared_user }}</h4>
+                                        </a>
+                                        <p class="post-time">{{ p.shared_on }}</p>
+                                    </div>
+                                </div>
+
+                                {% if p.shared_caption %}
+                                    <div class="caption"> <p class="post-content">{{ p.shared_caption }}</p> </div>
+                                {% endif %}
+
+                                <!-- Divider for shared post indication -->
+                                <div class="shared-indicator">
+                                    <p>Shared a post by</p>
+                                </div>
+                                <div class="post-head">
+                                    <img src="{{ p.author.profile.picture.url }}" alt="User" class="post-avatar">
+                                    <div class="post-user-details">
+                                        <a href="{% url 'profile' p.author.profile.pk %}" class="posts-grid-link "><h4 class="post-username">@{{ p.author.username }}</h4></a>
+                                        <p class="post-timestamp">{{ p.created_on }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Check visibility message for shared posts -->
+                                {% if visibility_message|get_item:post.id %}
+                                    <p class="red">{{ visibility_message|get_item:post.id }}</p>
+                                {% elif post.author == user or not post.author.profile.private or author_following_status|get_item:post.id %}
+                                    <div class="post-media">
+                                        {% if p.image.all %}
+                                            {% if p.image.all.count > 1 %}
+                                                <div class="image-carousel" data-images='[
+                                                        {% for image in p.image.all %}
+                                                            "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    ]'>
+                                                        <button class="prev-btn">&#60;</button>
+                                                        <div class="image-content">
+                                                            {% with first_image=p.image.first %}
+                                                                <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                            {% endwith %}
+                                                        </div>
+                                                        <button class="next-btn">&#62;</button>
+                                                </div>
+                                            {% else %}
+                                                <div class="image-content">
+                                                    {% with first_image=p.image.first %}
+                                                        <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                    {% endwith %}
+                                                </div>
+                                            {% endif %}
+                                            <a href="{% url 'post-detail' p.pk %}" class="posts-grid-link "> <div class="caption"> <p class="post-caption">{{ p.caption }}</p> </div> </a>
+                                        {% else %}
+                                            <p class="red">No images available for this post.</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="post-actions">
+                                        <form method="POST" action="{% url 'toggle-like' p.pk %}" style="display: flex; align-items: center;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="{{ request.path }}">
+                                            {% if user in p.likes.all %}
+                                                <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                            {% else %}
+                                                <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                            {% endif %}
+                                            <a href="{% url 'post-likes' p.pk %}" class="like-count">
+                                                <span>{{ p.likes.count }} like{{ p.likes.count|pluralize }}</span>
+                                            </a>
+                                        </form>
+                                                
+                                        <button class="comment-btn"><i class="fa fa-comment" class="comment-btn"></i></button>
+                                        <span class="comment-count">{{ comments_count|get_item:p.id }} comment{{ comments_count|get_item:p.id|pluralize }}</span>
+                                    </div> 
+                                {% else %}
+                                    <p class="red">You cannot view this post because you do not follow the author. Follow them to see the content.</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="red">No shared posts available.</p>
+                    {% endif %}
+                </div>
+            </section>       
+        {% else %}
+            <p> </p>
+        {% endif %}
+    {% else %}
+        <section id="user-shared-posts">
+            <div class="user-posts-header">
+                <h2 class="section-title">User's Shared Posts</h2>
+            </div>
+
+            <div class="posts-grid">
+                {% if shared_posts %}
+                    {% for p in shared_posts %}
+                        <div class="post-card">
+                            <div class="shared-post-header">
+                                <img src="{{ p.shared_user.profile.picture.url }}" alt="User" class="post-user-img">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' p.shared_user.profile.pk %}" class="feed-container-link">
+                                        <h4 class="post-username">@{{ p.shared_user }}</h4>
+                                    </a>
+                                    <p class="post-time">{{ p.shared_on }}</p>
+                                </div>
+                            </div>
+
+                            {% if p.shared_caption %}
+                                <div class="caption"> <p class="post-content">{{ p.shared_caption }}</p> </div>
+                            {% endif %}
+
+                            <!-- Divider for shared post indication -->
+                            <div class="shared-indicator">
+                                <p>Shared a post by</p>
+                            </div>
+                            <div class="post-head">
+                                <img src="{{ p.author.profile.picture.url }}" alt="User" class="post-avatar">
+                                <div class="post-user-details">
+                                    <a href="{% url 'profile' p.author.profile.pk %}" class="posts-grid-link "><h4 class="post-username">@{{ p.author.username }}</h4></a>
+                                    <p class="post-timestamp">{{ p.created_on }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Check visibility message for shared posts -->
+                            {% if visibility_message|get_item:p.id %}
+                                <p class="red">{{ visibility_message|get_item:p.id }}</p>
+                            {% elif post.author == user or not post.author.profile.private or author_following_status|get_item:post.id %}
+                                <div class="post-media">
+                                    {% if p.image.all %}
+                                        {% if p.image.all.count > 1 %}
+                                            <div class="image-carousel" data-images='[
+                                                    {% for image in p.image.all %}
+                                                        "{{ image.image.url }}"{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                ]'>
+                                                    <button class="prev-btn">&#60;</button>
+                                                    <div class="image-content">
+                                                        {% with first_image=p.image.first %}
+                                                            <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                        {% endwith %}
+                                                    </div>
+                                                    <button class="next-btn">&#62;</button>
+                                            </div>
+                                        {% else %}
+                                            <div class="image-content">
+                                                {% with first_image=p.image.first %}
+                                                    <img src="{{ first_image.image.url }}" alt="Post Image" class="post-image">
+                                                {% endwith %}
+                                            </div>
+                                        {% endif %}
+                                        <a href="{% url 'post-detail' p.pk %}" class="posts-grid-link "> <div class="caption"> <p class="post-caption">{{ p.caption }}</p> </div> </a>
+                                    {% else %}
+                                        <p class="red">No images available for this post.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="post-actions">
+                                    <form method="POST" action="{% url 'toggle-like' p.pk %}" style="display: flex; align-items: center;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.path }}">
+                                        {% if user in p.likes.all %}
+                                            <button class="like-btn"><i class="fa fa-heart"></i></button>&nbsp;&nbsp;
+                                        {% else %}
+                                            <button class="like-btn"><i class="fa fa-heart-o"></i></button>&nbsp;&nbsp;
+                                        {% endif %}
+                                        <a href="{% url 'post-likes' p.pk %}" class="like-count">
+                                            <span>{{ p.likes.count }} like{{ p.likes.count|pluralize }}</span>
+                                        </a>
+                                    </form>
+                                            
+                                    <button class="comment-btn"><i class="fa fa-comment" class="comment-btn"></i></button>
+                                    <span class="comment-count">{{ comments_count|get_item:p.id }} comment{{ comments_count|get_item:p.id|pluralize }}</span>
+                                </div> 
+                            {% else %}
+                                <p class="red">You cannot view this post because you do not follow the author. Follow them to see the content.</p>
+                            {% endif %}                   
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="red">No shared posts available.</p>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+    <!-- Image Carousel Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Select all image containers
+            const imageContainers = document.querySelectorAll('.image-carousel');
+
+            imageContainers.forEach(container => {
+                // Parse the image URLs from the data-images attribute
+                const images = JSON.parse(container.getAttribute('data-images'));
+                let currentIndex = 0;
+
+                // Select the image element and buttons within this container
+                const imgElement = container.querySelector('.image-content img');
+                const prevBtn = container.querySelector('.prev-btn');
+                const nextBtn = container.querySelector('.next-btn');
+
+                // Function to display the current image
+                function displayImage(index) {
+                    imgElement.src = images[index];
+                    imgElement.alt = `Image ${index + 1}`;
+                }
+
+                // Display the first image initially
+                displayImage(currentIndex);
+
+                // Add event listener for previous button
+                prevBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex - 1 + images.length) % images.length;
+                    displayImage(currentIndex);
+                });
+
+                // Add event listener for next button
+                nextBtn.addEventListener('click', () => {
+                    currentIndex = (currentIndex + 1) % images.length;
+                    displayImage(currentIndex);
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.formatTags = function() { // Ensure function is globally accessible
+                const elements = document.getElementsByClassName('caption');
+
+                for (let i=0; i < elements.length; i++) {
+                    let captionText = elements[i].children[0].innerText;
+
+                    let words = captionText.split(' ');
+
+                    for (let j=0; j < words.length; j++) {
+                        if (words[j][0] == '#') {
+                            let replacedText = captionText.replace(/\s\#(.*?)(\s|$)/g, `<a href="/social/search/?query=${words[j].substring(1)}">${words[j]}</a>`);
+                            elements[i].innerHTML = replacedText
+                        }
+                    }
+                }
+            };
+
+            formatTags();
+        });
+    </script>
+{% endblock content %}

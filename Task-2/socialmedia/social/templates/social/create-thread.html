@@ -1,0 +1,34 @@
+{% extends 'social/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="edit-container">
+        <h1>Start a Conversation</h1>
+        {% if messages %}
+            <div class="messages-container">
+                <ul class="messages-list">
+                    {% for message in messages %}
+                        {% if message.tags == 'error' %}
+                            <li class="message {{ message.tags }}">
+                                <span class="message-icon">
+                                    <span class="white-cross"><i class="fa fa-times"></i></span>
+                                </span>
+                                <span class="message-text">{{ message }}</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <form method="POST" class="edit-post-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label> Enter the username of the person you would like to talk to: </label>
+                {{ form }}
+            </div>
+
+            <button type="submit" class="submit-button">Continue</button>
+            <br><br>
+            <a href="{% url 'inbox' %}" class="cancel-button"> Cancel </a>
+        </form>
+    </div>
+{% endblock content %}

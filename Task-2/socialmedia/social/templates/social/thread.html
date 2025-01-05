@@ -1,0 +1,40 @@
+{% extends 'social/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="message-container">
+        {% if thread.receiver == request.user %}
+            <h5>@{{ thread.user }}</h5>
+        {% else %}
+            <h5>@{{ thread.receiver }}</h5>
+        {% endif %}
+
+        {% if message_list.all.count == 0 %}
+            <p class="no-message">No Messages</p>
+        {% endif %}
+
+        {% for message in message_list %}
+            {% if message.sender_user == request.user %}
+                {% if message.image %}
+                    <div class="sent-message">
+                        <img src="{{ message.image.url }}" class="message-img">
+                    </div>
+                {% endif %}
+                <p class="sent-message">{{ message.body }}</p>
+            {% elif message.receiver_user == request.user %}
+                {% if message.image %}
+                    <div class="received-message">
+                        <img src="{{ message.image.url }}" class="message-img">
+                    </div>
+                {% endif %}
+                <p class="received-message">{{ message.body }}</p>
+            {% endif %}
+        {% endfor %}
+
+        <form method="POST" class="message-form" action="{% url 'create-message' thread.pk%}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.image }}
+            {{ form.body }}
+            <button type="submit" class="send-button">Send</button>
+        </form>
+    </div>
+{% endblock content %}

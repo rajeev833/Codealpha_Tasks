@@ -1,0 +1,107 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <!-- Back to Profile Button -->
+    <div>
+        <a href="{% url 'profile' user.profile.pk%}" class="back-to-feed-btn">
+            ← Back to Profile
+        </a>
+    </div>
+    
+    <!-- Edit Profile Section -->
+    <section id="edit-profile">
+        <div class="profile-box">
+            <h1>Edit Profile</h1>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <!-- Non-field errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert-error">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- Name Field -->
+                <div class="form-group">
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="alert-error">
+                            {% for error in form.name.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Bio Field -->
+                <div class="form-group">
+                    {{ form.bio }}
+                    {% if form.bio.errors %}
+                        <div class="alert-error">
+                            {% for error in form.bio.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Birth Date Field -->
+                <div class="form-group">
+                    {{ form.birth_date }}
+                    {% if form.birth_date.errors %}
+                        <div class="alert-error">
+                            {% for error in form.birth_date.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Location Field -->
+                <div class="form-group">
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="alert-error">
+                            {% for error in form.location.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Profile Picture Field -->
+                <div class="form-group">
+                    {{ form.picture }}
+                    {% if form.picture.errors %}
+                        <div class="alert-error">
+                            {% for error in form.picture.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Banner Field -->
+                <div class="form-group">
+                    {{ form.banner }}
+                    {% if form.banner.errors %}
+                        <div class="alert-error">
+                            {% for error in form.banner.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Save Changes Button -->
+                <div class="form-group">
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </section>
+{% endblock content %}

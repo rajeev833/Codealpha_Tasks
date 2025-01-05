@@ -1,0 +1,17 @@
+{% extends 'social/base.html' %}
+{% load static %}
+{% block content %}
+<div class="edit-container">
+    <h1>Deactivate Account</h1>
+    <p class="redirect-text">Are you sure you want to deactivate your account? You will not be able to access it until reactivated.</p>
+    <br>
+    <form method="POST" class="edit-post-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <br>
+        <button type="submit" class="danger-button">Deactivate Account</button>
+        <br>
+        <a href="{% url 'settings' %}" class="cancel-button"> Cancel </a>
+    </form>
+</div>
+{% endblock content %}

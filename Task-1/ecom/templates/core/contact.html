@@ -1,0 +1,92 @@
+{% extends 'partials/base1.html' %}
+{% load static %}
+{% block content %}
+    <main class="main-background">
+        <div class="contact-main">
+            <div class="container">
+                <section class="contact-info">
+                    <h1>Contact Us</h1>
+                    <p>If you have any questions or need support, feel free to reach out to us through the contact form or our contact details below. We are here to help!</p>
+                    <div class="contact-details">
+                        <div class="contact-detail">
+                            <i class="fa fa-envelope"></i>
+                            <h3>Email</h3>
+                            <p><a href="mailto:support@mystore.com">support@mystore.com</a></p>
+                        </div>
+                    </div>
+                </section>
+                <section class="contact-form">
+                    <h2>Send Us a Message</h2>
+                    <h4 class="delivered" id="message-response"></h4>
+                    <form action="/ajax-contact-form/" method="POST" id="contact-form-ajax">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        <label for="name">Name</label>
+                        <input type="text" id="full_name" name="name" value="{{ profile.full_name|default_if_none:'' }}" required>
+
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{ profile.email|default_if_none:'' }}" required>
+
+                        <label for="subject">Subject</label>
+                        <input type="text" id="subject" name="subject" required>
+                        
+                        <label for="message">Message</label>
+                        <textarea id="message" name="message" rows="5" required></textarea>
+                        
+                        <button type="submit">Send Message</button>
+                    </form>
+                </section>
+    
+                <section class="map">
+                    <h2>Find Us</h2>
+                    <iframe src="https://www.google.com/maps/" allowfullscreen="" loading="lazy"></iframe>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        $(document).on("submit", "#contact-form-ajax", function(e) {
+            e.preventDefault();
+            console.log("Submitted...");
+
+            let full_name = $("#full_name").val();
+            let email = $("#email").val();
+            let subject = $("#subject").val();
+            let message = $("#message").val();
+
+            console.log("Full Name:", full_name);
+            console.log("Email:", email);
+            console.log("Subject:", subject);
+            console.log("Message:", message);
+
+            // Get the CSRF token from the form
+            let csrf_token = $("input[name=csrfmiddlewaretoken]").val();
+
+            $.ajax({
+                url: "/ajax-contact-form/",
+                type: "POST",  // Use POST method
+                data: {
+                    "full_name": full_name,
+                    "email": email,
+                    "subject": subject,
+                    "message": message,
+                },
+                headers: {
+                    "X-CSRFToken": csrf_token  // Set the CSRF token
+                },
+                dataType: "json",
+                beforeSend: function() {
+                    console.log("Sending data to server...");
+                },
+                success: function(response) {
+                    console.log("Data sent to server...");
+                    $("#contact-form-ajax").hide();
+                    $("#message-response").html("Your message was sent successfully.");
+                },
+                error: function(error) {
+                    console.log("Error in submission", error);
+                }
+            });
+        });
+    </script>
+{% endblock content %}

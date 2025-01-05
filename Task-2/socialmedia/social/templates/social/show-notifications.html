@@ -1,0 +1,134 @@
+{% load static %}
+
+<li class="settings">
+    <a href="#" class="dropbtn">
+        <i class="fa fa-bell"></i> 
+        <sup class="notification-badge">{{ notifications.count }}</sup>Notification{{ notifications.count|pluralize }}
+    </a>
+    <div class="dropdown-content">
+        <!-- <p>You have {{ notifications.count }} Notification{{ notifications.count|pluralize }}</p> -->
+        {% for notification in notifications %}
+            {% if notification.post %}
+                {% if notification.notification_type == 1 %}
+                    <div class="notification">
+                        <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                        {% if notification.from_user.profile.picture %}
+                            <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                        {% else %}
+                            <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                        {% endif %}
+                        <a href="{% url 'post-notification' notification.pk notification.post.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> liked your post.</a>
+                        <span class="notification-date">{{ notification.date }}</span>
+                    </div>
+                {% elif notification.notification_type == 2 %}
+                    <div class="notification">
+                        <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                        {% if notification.from_user.profile.picture %}
+                            <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                        {% else %}
+                            <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                        {% endif %}
+                        <a href="{% url 'post-notification' notification.pk notification.post.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> commented on your post.</a>
+                        <span class="notification-date">{{ notification.date }}</span>
+                    </div>
+                {% else %}
+                    <div class="notification">
+                        <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                        {% if notification.from_user.profile.picture %}
+                            <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                        {% else %}
+                            <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                        {% endif %}
+                        <a href="{% url 'post-notification' notification.pk notification.post.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> shared your post.</a>
+                        <span class="notification-date">{{ notification.date }}</span>
+                    </div>
+                {% endif %}
+            {% elif notification.comment %}
+                {% if notification.notification_type == 1 %}
+                    <div class="notification">
+                        <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                        {% if notification.from_user.profile.picture %}
+                            <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                        {% else %}
+                            <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                        {% endif %}
+                        <a href="{% url 'post-notification' notification.pk notification.comment.post.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> liked your comment.</a>
+                        <span class="notification-date">{{ notification.date }}</span>
+                    </div>
+                {% elif notification.notification_type == 2 %}
+                    <div class="notification">
+                        <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                        {% if notification.from_user.profile.picture %}
+                            <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                        {% else %}
+                            <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                        {% endif %}
+                        <a href="{% url 'post-notification' notification.pk notification.comment.post.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> replied to your post.</a>
+                        <span class="notification-date">{{ notification.date }}</span>
+                    </div>
+                {% endif %}
+            {% elif notification.notification_type == 4 %}
+                <div class="notification">
+                    <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                    {% if notification.from_user.profile.picture %}
+                        <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                    {% else %}
+                        <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                    {% endif %}
+                    <a href="{% url 'thread-notification' notification.pk notification.thread.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> sent you a message.</a>
+                    <span class="notification-date">{{ notification.date }}</span>
+                </div>
+            {% else %}
+                <div class="notification">
+                    <span class="close-btn" onclick="removeNotification(`{% url 'notification-delete' notification.pk %}`, `{{ request.path }}`)">&times;</span>
+                    {% if notification.from_user.profile.picture %}
+                        <img src="{{ notification.from_user.profile.picture.url }}" alt="User Avatar" class="notification-avatar">
+                    {% else %}
+                        <img src="{% static 'asset/images/profile.jpg' %}" alt="User Avatar" class="notification-avatar">
+                    {% endif %}
+                    <a href="{% url 'follow-notification' notification.pk notification.from_user.profile.pk %}" class="notification-link"> <span class="notification-username">@{{ notification.from_user }}</span> started following you.</a>
+                    <span class="notification-date">{{ notification.date }}</span>
+                </div>
+            {% endif %}
+        {% empty %}
+            <p class="view-all">No Notifications</p>
+        {% endfor %}
+    </div>
+</li>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function removeNotification(removeNotificationURL, redirectURL) {
+        const csrftoken = getCookie('csrftoken');
+        let xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function() {
+            if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+                if (xmlhttp.status == 200) {
+                    window.location.replace(redirectURL);
+                } else {
+                    alert('There was an error');
+                }
+            }
+        };
+
+        xmlhttp.open("DELETE", removeNotificationURL, true);
+        xmlhttp.setRequestHeader("X-CSRFToken", csrftoken);
+        xmlhttp.send();
+    }
+</script>
